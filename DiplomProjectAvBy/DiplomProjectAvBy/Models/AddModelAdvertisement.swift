@@ -94,7 +94,7 @@ struct CreateAdForm {
     var title: String = ""
     var description: String = ""
     var price: String = ""
-    var category: Category = .carsWithMileage
+    var category: Category = .allCathegories
     var city: String = ""
     var selectedImages: [UIImage] = []
     

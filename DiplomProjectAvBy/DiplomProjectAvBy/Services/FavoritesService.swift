@@ -31,14 +31,12 @@ class FavoritesService: FavoritesServiceProtocol, ObservableObject {
     func listenToFavorites() {
         guard let userId = Auth.auth().currentUser?.uid else {
             errorMessage = "Необходимо авторизоваться"
-            print("❌ FavoritesService: Пользователь не авторизован")
             return
         }
         
         isLoading = true
         errorMessage = nil
         
-        print("🟡 FavoritesService: Загрузка избранного для пользователя \(userId)")
         
         // Останавливаем предыдущий слушатель
         listener?.remove()
@@ -52,13 +50,11 @@ class FavoritesService: FavoritesServiceProtocol, ObservableObject {
                 
                 if let error = error {
                     self.errorMessage = "Ошибка загрузки избранного: \(error.localizedDescription)"
-                    print("❌ FavoritesService: Ошибка слушателя: \(error)")
                     return
                 }
                 
                 guard let documents = snapshot?.documents else {
                     self.favoriteAds = []
-                    print("ℹ️ FavoritesService: Нет избранных объявлений")
                     return
                 }
                 
@@ -68,7 +64,6 @@ class FavoritesService: FavoritesServiceProtocol, ObservableObject {
                         favorite.id = document.documentID
                         return favorite
                     } catch {
-                        print("❌ FavoritesService: Ошибка парсинга избранного: \(error)")
                         return nil
                     }
                 }
@@ -78,7 +73,6 @@ class FavoritesService: FavoritesServiceProtocol, ObservableObject {
                 
                 self.favoriteAds = sortedFavorites
                 self.errorMessage = nil
-                print("✅ FavoritesService: Загружено \(sortedFavorites.count) избранных")
                 
                 self.loadAdsDetails(for: sortedFavorites)
             }
@@ -93,26 +87,21 @@ class FavoritesService: FavoritesServiceProtocol, ObservableObject {
                     var updatedFavorite = favorite
                     updatedFavorite.advertisement = ad
                     updatedFavorites.append(updatedFavorite)
-                    print("✅ FavoritesService: Загружено объявление для избранного: \(ad.title)")
                 } else {
-                    print("❌ FavoritesService: Не удалось загрузить объявление \(favorite.adId)")
                     updatedFavorites.append(favorite)
                 }
             }
             
             await MainActor.run {
                 self.favoriteAds = updatedFavorites
-                print("✅ FavoritesService: Всего обновлено \(updatedFavorites.count) избранных с данными объявлений")
             }
         }
     }
     
     func addToFavorites(ad: Advertisement) async -> Bool {
-        print("🟡 FavoritesService: Добавление в избранное...")
         
         guard let userId = Auth.auth().currentUser?.uid else {
-            let error = "❌ Ошибка: Пользователь не авторизован"
-            print(error)
+            let error = "Ошибка: Пользователь не авторизован"
             await MainActor.run {
                 errorMessage = error
             }
@@ -120,20 +109,16 @@ class FavoritesService: FavoritesServiceProtocol, ObservableObject {
         }
         
         guard let adId = ad.id else {
-            let error = "❌ Ошибка: У объявления нет ID"
-            print(error)
+            let error = "Ошибка: У объявления нет ID"
             await MainActor.run {
                 errorMessage = error
             }
             return false
         }
         
-        print("👤 User ID: \(userId)")
-        print("📱 Ad ID: \(adId)")
         
         if isFavorite(adId: adId) {
-            let error = "⚠️ Объявление уже в избранном"
-            print(error)
+            let error = " Объявление уже в избранном"
             await MainActor.run {
                 errorMessage = error
             }
@@ -146,18 +131,15 @@ class FavoritesService: FavoritesServiceProtocol, ObservableObject {
             addedAt: Date()
         )
         
-        print("📝 Создан объект FavoriteAd: \(favorite)")
         
         do {
             let documentRef = try await db.collection("favorites").addDocument(from: favorite)
-            print("✅ Успешно добавлено в Firestore! Document ID: \(documentRef.documentID)")
             await MainActor.run {
                 errorMessage = nil
             }
             return true
         } catch {
-            let errorMsg = "❌ Ошибка Firestore: \(error.localizedDescription)"
-            print(errorMsg)
+            let errorMsg = " Ошибка Firestore: \(error.localizedDescription)"
             await MainActor.run {
                 errorMessage = errorMsg
             }
@@ -173,7 +155,6 @@ class FavoritesService: FavoritesServiceProtocol, ObservableObject {
             return false
         }
         
-        print("🟡 FavoritesService: Удаление из избранного adId: \(adId)")
         
         do {
             let query = db.collection("favorites")
@@ -182,11 +163,9 @@ class FavoritesService: FavoritesServiceProtocol, ObservableObject {
             
             let snapshot = try await query.getDocuments()
             
-            print("📊 Найдено документов для удаления: \(snapshot.documents.count)")
             
             for document in snapshot.documents {
                 try await document.reference.delete()
-                print("✅ Удален документ избранного: \(document.documentID)")
             }
             
             await MainActor.run {
@@ -195,7 +174,6 @@ class FavoritesService: FavoritesServiceProtocol, ObservableObject {
             return true
         } catch {
             let errorMsg = "Ошибка удаления из избранного: \(error.localizedDescription)"
-            print("❌ \(errorMsg)")
             await MainActor.run {
                 errorMessage = errorMsg
             }
@@ -206,12 +184,10 @@ class FavoritesService: FavoritesServiceProtocol, ObservableObject {
     func toggleFavorite(ad: Advertisement) async -> Bool {
         guard let adId = ad.id else {
             await MainActor.run {
-                errorMessage = "❌ Ошибка: У объявления нет ID"
+                errorMessage = " Ошибка: У объявления нет ID"
             }
             return false
         }
-        
-        print("🟡 FavoritesService: Переключение избранного для adId: \(adId)")
         
         if isFavorite(adId: adId) {
             return await removeFromFavorites(adId: adId)
@@ -228,15 +204,11 @@ class FavoritesService: FavoritesServiceProtocol, ObservableObject {
             return false
         }
         
-        print("🟡 FavoritesService: Очистка всех избранных для пользователя \(userId)")
-        
         do {
             let query = db.collection("favorites")
                 .whereField("userId", isEqualTo: userId)
             
             let snapshot = try await query.getDocuments()
-            
-            print("📊 Найдено избранных для очистки: \(snapshot.documents.count)")
             
             for document in snapshot.documents {
                 try await document.reference.delete()
@@ -245,11 +217,9 @@ class FavoritesService: FavoritesServiceProtocol, ObservableObject {
             await MainActor.run {
                 errorMessage = nil
             }
-            print("✅ Все избранные очищены")
             return true
         } catch {
             let errorMsg = "Ошибка очистки избранного: \(error.localizedDescription)"
-            print("❌ \(errorMsg)")
             await MainActor.run {
                 errorMessage = errorMsg
             }
@@ -264,7 +234,6 @@ class FavoritesService: FavoritesServiceProtocol, ObservableObject {
     func stopListening() {
         listener?.remove()
         listener = nil
-        print("🟡 FavoritesService: Слушатель остановлен")
     }
     
     deinit {

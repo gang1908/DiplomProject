@@ -131,11 +131,13 @@ struct ProfileViewController: View {
         }
         .onAppear {
             if authModel.isLoggedIn {
-                print("🟡 Profile: Пользователь авторизован, загружаем объявления")
-                print("📱 Profile: Данные пользователя - Имя: \(authModel.loginName), Email: \(authModel.email)")
                 profileViewModel.loadUserAds()
-            } else {
-                print("🔴 Profile: Пользователь не авторизован")
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NewAdCreated"))) { _ in
+            // Обновляем профиль при создании нового объявления
+            if authModel.isLoggedIn {
+                profileViewModel.refreshUserAds()
             }
         }
     }

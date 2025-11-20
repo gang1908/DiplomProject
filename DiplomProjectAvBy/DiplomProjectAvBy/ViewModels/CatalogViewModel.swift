@@ -8,6 +8,7 @@
 import Foundation
 internal import Combine
 import SwiftUI
+import FirebaseAuth
 
 @MainActor
 class CatalogViewModel: ObservableObject {
@@ -29,11 +30,8 @@ class CatalogViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     let categories = ["Все категории", "Автомобили с пробегом", "Новые автомобили", "Б/у запчасти для авто", "Спецтехника", "Шины и диски", "Грузовой транспорт", "Электромобили"]
-    
     let sortOptions = ["Сначала новые", "Сначала старые", "Цена по возрастанию", "Цена по убыванию"]
-    
     let cities = ["Минск", "Гомель", "Брест", "Витебск", "Гродно", "Могилев", "Барановичи", "Борисов", "Орша", "Молодечно"]
-    
     let brands = ["Audi", "BMW", "Ford", "Hyundai", "Kia", "Mercedes", "Nissan", "Renault", "Skoda", "Toyota", "Volkswagen", "Volvo"]
     
     init(adService: AdServiceProtocol = AdService()) {
@@ -46,7 +44,6 @@ class CatalogViewModel: ObservableObject {
         adService.allAdsPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] ads in
-                print("🟡 CatalogViewModel получил \(ads.count) объявлений")
                 self?.advertisements = ads
                 self?.applyCurrentFilters()
             }
@@ -71,12 +68,11 @@ class CatalogViewModel: ObservableObject {
         .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
         .map { [weak self] searchText, category, sort, ads -> [Advertisement] in
             let filtered = self?.applyFiltersAndSearch(to: ads, searchText: searchText, category: category, sort: sort) ?? ads
-            print("🟡 После фильтрации: \(filtered.count) объявлений")
             return filtered
         }
         .assign(to: &$filteredAds)
         
-        // Реакция на изменения фильтров цены, города и бренда
+        // Реакция на изменения фильтров
         Publishers.CombineLatest4(
             $minPrice,
             $maxPrice,
@@ -97,14 +93,11 @@ class CatalogViewModel: ObservableObject {
             category: selectedCategory,
             sort: selectedSort
         )
-        print("🟡 Текущие фильтры применены: \(filtered.count) объявлений")
         filteredAds = filtered
     }
     
     private func applyFiltersAndSearch(to ads: [Advertisement], searchText: String, category: String, sort: String) -> [Advertisement] {
         var filtered = ads
-        
-        print("🟡 Начало фильтрации: \(ads.count) объявлений")
         
         // Поиск по тексту
         if !searchText.isEmpty {
@@ -114,35 +107,29 @@ class CatalogViewModel: ObservableObject {
                 ad.brand?.localizedCaseInsensitiveContains(searchText) == true ||
                 ad.model?.localizedCaseInsensitiveContains(searchText) == true
             }
-            print("🟡 После поиска '\(searchText)': \(filtered.count) объявлений")
         }
         
         // Фильтрация по категории
         if category != "Все категории" {
             filtered = filtered.filter { $0.category == category }
-            print("🟡 После фильтра категории '\(category)': \(filtered.count) объявлений")
         }
         
         // Фильтрация по цене
         if let min = Double(minPrice) {
             filtered = filtered.filter { $0.price >= min }
-            print("🟡 После мин. цены \(min): \(filtered.count) объявлений")
         }
         if let max = Double(maxPrice) {
             filtered = filtered.filter { $0.price <= max }
-            print("🟡 После макс. цены \(max): \(filtered.count) объявлений")
         }
         
         // Фильтрация по городу
         if !selectedCity.isEmpty {
             filtered = filtered.filter { $0.city == selectedCity }
-            print("🟡 После фильтра города '\(selectedCity)': \(filtered.count) объявлений")
         }
         
         // Фильтрация по бренду
         if !selectedBrand.isEmpty {
             filtered = filtered.filter { $0.brand == selectedBrand }
-            print("🟡 После фильтра бренда '\(selectedBrand)': \(filtered.count) объявлений")
         }
         
         // Сортировка
@@ -157,7 +144,6 @@ class CatalogViewModel: ObservableObject {
             filtered.sort { $0.createdAt > $1.createdAt }
         }
         
-        print("✅ Финальный результат фильтрации: \(filtered.count) объявлений")
         return filtered
     }
     
@@ -182,19 +168,25 @@ class CatalogViewModel: ObservableObject {
     }
     
     func refresh() {
-        print("🟡 Принудительное обновление каталога")
         Task {
             await adService.loadAds()
         }
     }
     
     func listenToAds() {
-        print("🟡 Запуск слушателя объявлений")
-        adService.listenToAllAds()
-    }
+            
+            isLoading = true
+            errorMessage = nil
+            adService.listenToAllAds()
+        }
+    
     
     func stopListening() {
-        print("🟡 Остановка слушателя объявлений")
         adService.stopListening()
+    }
+    
+    // Метод для ручного обновления при создании нового объявления
+    func manualRefresh() {
+        refresh()
     }
 }

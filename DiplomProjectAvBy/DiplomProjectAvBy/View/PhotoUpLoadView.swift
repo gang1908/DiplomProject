@@ -70,6 +70,3 @@ struct PhotoUploadView: View {
     }
 }
 
-#Preview {
-    PhotoUploadView(viewModel: CreateAdViewModel())
-}

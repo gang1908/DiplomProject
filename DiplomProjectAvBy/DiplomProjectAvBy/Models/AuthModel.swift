@@ -38,14 +38,12 @@ class AuthModel: ObservableObject {
     
     private func checkAuthState() {
         if let user = Auth.auth().currentUser {
-            print("✅ Firebase user found, setting isLoggedIn to true")
             self.isLoggedIn = true
             // Загружаем данные пользователя из Firebase
             self.loadUserData(from: user)
         } else {
             // Fallback на UserDefaults если Firebase не инициализирован
             let savedState = UserDefaults.standard.bool(forKey: "isLoggedIn")
-            print("📱 Auth state from UserDefaults: \(savedState)")
             self.isLoggedIn = savedState
             
             // Если сохранено состояние входа, загружаем данные из UserDefaults
@@ -58,20 +56,17 @@ class AuthModel: ObservableObject {
     private func loadUserData(from user: User) {
         self.email = user.email ?? ""
         self.loginName = user.displayName ?? user.email?.components(separatedBy: "@").first ?? "Пользователь"
-        print("✅ User data loaded from Firebase: \(self.loginName), \(self.email)")
     }
     
     private func loadUserDataFromDefaults() {
         self.email = UserDefaults.standard.string(forKey: "userEmail") ?? ""
         self.loginName = UserDefaults.standard.string(forKey: "userName") ?? "Пользователь"
-        print("✅ User data loaded from UserDefaults: \(self.loginName), \(self.email)")
     }
     
     private func saveUserData() {
         // Сохраняем в UserDefaults для быстрого доступа
         UserDefaults.standard.set(email, forKey: "userEmail")
         UserDefaults.standard.set(loginName, forKey: "userName")
-        print("✅ User data saved: \(loginName), \(email)")
     }
     
     func handleSaveRegistration() {
@@ -105,13 +100,11 @@ class AuthModel: ObservableObject {
                     self.isLoggedIn = true
                     self.saveUserData() // Сохраняем данные
                     self.clearFields()
-                    print("✅ Registration successful for user: \(self.loginName)")
                 }
             } catch {
                 await MainActor.run {
                     self.isLoading = false
                     self.errorMessage = self.handleAuthError(error)
-                    print("❌ Registration error: \(error)")
                 }
             }
         }
@@ -139,14 +132,12 @@ class AuthModel: ObservableObject {
                         self.isLoggedIn = true
                         self.saveUserData() // Сохраняем данные
                         self.clearFields()
-                        print("✅ Sign in successful for user: \(userData.name)")
                     }
                 }
             } catch {
                 await MainActor.run {
                     self.isLoading = false
                     self.errorMessage = self.handleAuthError(error)
-                    print("❌ Sign in error: \(error)")
                 }
             }
         }
@@ -160,17 +151,14 @@ class AuthModel: ObservableObject {
             // Очищаем сохраненные данные
             UserDefaults.standard.removeObject(forKey: "userEmail")
             UserDefaults.standard.removeObject(forKey: "userName")
-            print("✅ Signed out successfully")
         } catch {
             errorMessage = "Ошибка при выходе: \(error.localizedDescription)"
-            print("❌ Sign out error: \(error)")
         }
     }
     
     private func clearFields() {
         password = ""
         confirmPassword = ""
-        // Не очищаем email и loginName, так как они могут понадобиться
     }
     
     private func handleAuthError(_ error: Error) -> String {
@@ -203,12 +191,10 @@ class AuthModel: ObservableObject {
         changeRequest.displayName = name
         changeRequest.commitChanges { [weak self] error in
             if let error = error {
-                print("❌ Error updating profile: \(error)")
             } else {
                 DispatchQueue.main.async {
                     self?.loginName = name
                     self?.saveUserData()
-                    print("✅ User profile updated: \(name)")
                 }
             }
         }

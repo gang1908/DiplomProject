@@ -23,3 +23,5 @@ protocol AdServiceProtocol {
     func stopListening()
     func createAd(_ ad: Advertisement, images: [UIImage]) async throws -> String
 }
+
+

@@ -28,36 +28,25 @@ class CreateAdViewModel: ObservableObject {
     func createAd() {
         guard let user = Auth.auth().currentUser else {
             errorMessage = "Нужно войти в аккаунт"
-            print("❌ CreateAd: Пользователь не авторизован")
             return
         }
-        
+    
         guard let price = Double(form.price) else {
             errorMessage = "Введите корректную цену"
-            print("❌ CreateAd: Некорректная цена: \(form.price)")
             return
         }
         
-        print("🟡 CreateAd: Начало создания объявления")
-        print("📋 Данные формы:")
-        print("   - Заголовок: \(form.title)")
-        print("   - Описание: \(form.description)")
-        print("   - Цена: \(price)")
-        print("   - Категория: \(form.category.rawValue)")
-        print("   - Город: \(form.city)")
-        print("   - Пользователь: \(user.uid)")
-        
         let ad = Advertisement(
-            title: form.title,
-            description: form.description,
+            title: form.title.trimmingCharacters(in: .whitespaces),
+            description: form.description.trimmingCharacters(in: .whitespaces),
             price: price,
             category: form.category.rawValue,
-            city: form.city,
+            city: form.city.trimmingCharacters(in: .whitespaces),
             userId: user.uid,
             userEmail: user.email ?? "",
             userName: user.displayName ?? user.email?.components(separatedBy: "@").first ?? "Пользователь"
         )
-        
+
         isLoading = true
         errorMessage = ""
         
@@ -69,19 +58,22 @@ class CreateAdViewModel: ObservableObject {
                     self.isLoading = false
                     self.showSuccess = true
                     self.resetForm()
-                    print("✅ CreateAd: Объявление успешно создано с ID: \(adId)")
+                    
+                    // Уведомляем о новом объявлении
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("NewAdCreated"),
+                        object: nil
+                    )
                 }
             } catch {
                 await MainActor.run {
                     self.isLoading = false
-                    self.errorMessage = "Ошибка: \(error.localizedDescription)"
-                    print("❌ CreateAd: Ошибка создания объявления: \(error)")
+                    self.errorMessage = "Ошибка создания: \(error.localizedDescription)"
                 }
             }
         }
     }
     
-    // Остальные методы без изменений...
     func resetForm() {
         form = CreateAdForm()
     }

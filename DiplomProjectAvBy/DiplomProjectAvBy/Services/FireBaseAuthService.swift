@@ -23,8 +23,6 @@ final class AuthentificationService {
         let changeRequest = result.user.createProfileChangeRequest()
         changeRequest.displayName = userName
         try await changeRequest.commitChanges()
-        
-        print("✅ User created: \(result.user.uid), name: \(userName)")
     }
     
     func signIn(withEmail email: String, password: String) async throws {
@@ -35,7 +33,6 @@ final class AuthentificationService {
         }
         
         let result = try await Auth.auth().signIn(withEmail: email, password: password)
-        print("✅ User signed in: \(result.user.uid)")
     }
     
     // Метод для получения данных текущего пользователя

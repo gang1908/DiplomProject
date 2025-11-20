@@ -42,10 +42,14 @@ struct CatalogViewController: View {
                 }
             }
             .onAppear {
-                viewModel.listenToAds() // Загружаем в реальном времени
+                viewModel.listenToAds()
             }
             .onDisappear {
                 viewModel.stopListening()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NewAdCreated"))) { _ in
+                // Принудительно обновляем при получении уведомления о новом объявлении
+                viewModel.refresh()
             }
         }
     }
@@ -160,6 +164,3 @@ struct CatalogViewController: View {
 }
 
 
-#Preview {
-    CatalogViewController()
-}

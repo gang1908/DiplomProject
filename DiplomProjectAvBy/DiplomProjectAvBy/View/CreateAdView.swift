@@ -45,11 +45,6 @@ struct CreateAdView: View {
             } message: {
                 Text("Объявление успешно создано!")
             }
-//            .sheet(isPresented: $showingImagePicker) {
-//                ImagePickerView { images in
-//                    viewModel.addImages(images)
-//                }
-//            }
         }
     }
     
@@ -94,33 +89,6 @@ struct CreateAdView: View {
             TextField("Город", text: $viewModel.form.city)
         }
     }
-    
-//    private var photosSection: some View {
-//        Section(header: Text("Фотографии")) {
-//            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 10) {
-//                ForEach(Array(viewModel.form.selectedImages.enumerated()), id: \.offset) { index, image in
-//                    ImageThumbnailView(
-//                        image: image,
-//                        onDelete: { viewModel.removeImage(at: index) }
-//                    )
-//                }
-                
-//                if viewModel.form.selectedImages.count < 3 {
-//                    Button(action: { showingImagePicker = true }) {
-//                        RoundedRectangle(cornerRadius: 8)
-//                            .stroke(Color.gray, style: StrokeStyle(lineWidth: 1, dash: [5]))
-//                            .frame(height: 80)
-//                            .overlay(
-//                                Image(systemName: "plus")
-//                                    .font(.title2)
-//                                    .foregroundColor(.gray)
-//                            )
-//                    }
-//                }
-//            }
-//            .padding(.vertical, 8)
-//
-//    }
     
     private var publishSection: some View {
         Section {

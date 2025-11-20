@@ -28,13 +28,13 @@ class ProfileViewModel: ObservableObject {
     func loadUserAds() {
         guard let userId = Auth.auth().currentUser?.uid else {
             errorMessage = "Пользователь не авторизован"
+            userAds = [] // Очищаем список при отсутствии пользователя
             return
         }
         
         isLoading = true
         errorMessage = nil
         
-        print("🟡 Загружаем объявления пользователя: \(userId)")
         
         // Останавливаем предыдущий слушатель
         listener?.remove()
@@ -50,29 +50,25 @@ class ProfileViewModel: ObservableObject {
                 
                 if let error = error {
                     self.errorMessage = "Ошибка загрузки объявлений: \(error.localizedDescription)"
-                    print("❌ Ошибка загрузки объявлений: \(error)")
                     return
                 }
                 
                 guard let documents = snapshot?.documents else {
                     self.userAds = []
-                    print("ℹ️ Нет документов для пользователя")
                     return
                 }
+            
                 
                 let ads = documents.compactMap { document -> Advertisement? in
                     do {
                         let ad = try document.data(as: Advertisement.self)
-                        print("✅ Загружено объявление: \(ad.title) - \(ad.id ?? "no id")")
                         return ad
                     } catch {
-                        print("❌ Ошибка парсинга объявления: \(error)")
                         return nil
                     }
                 }
                 
                 self.userAds = ads
-                print("✅ Всего загружено \(ads.count) объявлений пользователя")
                 self.errorMessage = nil
             }
     }
@@ -80,5 +76,9 @@ class ProfileViewModel: ObservableObject {
     func stopListening() {
         listener?.remove()
         listener = nil
+    }
+    
+    func refreshUserAds() {
+        loadUserAds()
     }
 }

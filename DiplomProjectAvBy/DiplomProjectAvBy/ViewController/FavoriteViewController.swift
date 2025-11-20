@@ -178,6 +178,3 @@ struct FavoriteViewController: View {
 }
 
 
-#Preview {
-    FavoriteViewController()
-}

@@ -86,10 +86,8 @@ struct AdDetailView: View {
     
     private func checkAuthAndLoadFavorites() {
         if let user = Auth.auth().currentUser {
-            print("✅ Пользователь авторизован: \(user.uid)")
             favoritesViewModel.loadFavorites()
         } else {
-            print("❌ Пользователь не авторизован")
             errorMessage = "Для добавления в избранное необходимо войти в аккаунт"
             showErrorAlert = true
         }
@@ -124,7 +122,6 @@ struct AdDetailView: View {
         }
         
         isLoading = true
-        print("🟡 Начинаем toggleFavorite для ad: \(adId)")
         
         Task {
             let success = await favoritesViewModel.toggleFavorite(ad: ad)
@@ -133,15 +130,12 @@ struct AdDetailView: View {
                 isLoading = false
                 
                 if success {
-                    print("✅ ToggleFavorite выполнен успешно")
                     let isNowFavorite = favoritesViewModel.isFavorite(adId: adId)
-                    print("📊 Статус избранного: \(isNowFavorite)")
                 } else {
                     // Показываем ошибку из ViewModel
                     if let error = favoritesViewModel.errorMessage {
                         errorMessage = error
                         showErrorAlert = true
-                        print("❌ Ошибка: \(error)")
                     }
                 }
             }
